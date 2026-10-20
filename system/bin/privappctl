@@ -1,0 +1,481 @@
+#!/system/bin/sh
+# ==============================================================================
+# PrivApp Systemizer (Modern arm64 / Android 10-15+)
+# Author: Ayoubvvch
+# Repository: https://github.com/Ayoubvvch/privapp-systemizer-magisk
+# ==============================================================================
+
+MODID="privapp_systemizer"
+VERSION="v1.0.0"
+
+# Color constants
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m' # No Color
+
+# Determine active module directory
+if [ -d "/data/adb/modules/$MODID" ]; then
+  MODDIR="/data/adb/modules/$MODID"
+elif [ -d "/data/adb/modules_update/$MODID" ]; then
+  MODDIR="/data/adb/modules_update/$MODID"
+else
+  MODDIR="/data/adb/modules/$MODID"
+fi
+
+PRIV_APP_DIR="$MODDIR/system/priv-app"
+APP_DIR="$MODDIR/system/app"
+
+ensure_dirs() {
+  mkdir -p "$PRIV_APP_DIR" "$APP_DIR"
+}
+
+check_root() {
+  if [ "$(id -u)" != "0" ]; then
+    echo -e "${RED}[!] Error: This utility requires root permissions.${NC}"
+    echo -e "${YELLOW}Please run with 'su' first.${NC}"
+    exit 1
+  fi
+}
+
+print_header() {
+  echo -e "${CYAN}${BOLD}"
+  echo "=========================================================="
+  echo "        PrivApp Systemizer (Modern) - $VERSION"
+  echo "        Systemless App Systemizer for Android 10-15+"
+  echo "=========================================================="
+  echo -e "${NC}"
+}
+
+apply_permissions() {
+  local target_dir="$1"
+  if [ -d "$target_dir" ]; then
+    find "$target_dir" -type d -exec chmod 0755 {} + 2>/dev/null
+    find "$target_dir" -type f -exec chmod 0644 {} + 2>/dev/null
+    chown -R 0:0 "$target_dir" 2>/dev/null
+    chcon -R u:object_r:system_file:s0 "$target_dir" 2>/dev/null
+  fi
+}
+
+# Systemize an installed package
+systemize_package() {
+  local pkg="$1"
+  local target_type="${2:-priv-app}" # default: priv-app
+
+  ensure_dirs
+
+  if [ -z "$pkg" ]; then
+    echo -e "${RED}[!] Error: No package specified.${NC}"
+    return 1
+  fi
+
+  # Verify package exists
+  local apk_first_line
+  apk_first_line=$(pm path "$pkg" 2>/dev/null | head -n 1 | sed 's/^package://')
+
+  if [ -z "$apk_first_line" ] || [ ! -f "$apk_first_line" ]; then
+    echo -e "${RED}[!] Error: Package '$pkg' is not installed or path not found.${NC}"
+    return 1
+  fi
+
+  local src_dir
+  src_dir=$(dirname "$apk_first_line")
+
+  local dest_base
+  if [ "$target_type" = "app" ]; then
+    dest_base="$APP_DIR"
+  else
+    dest_base="$PRIV_APP_DIR"
+  fi
+
+  local dest_pkg_dir="$dest_base/$pkg"
+
+  echo -e "${YELLOW}[*] Systemizing:${NC} ${BOLD}$pkg${NC}"
+  echo -e "    Source: $src_dir"
+  echo -e "    Target: /system/$target_type/$pkg"
+
+  # Remove older copy in destination if present
+  rm -rf "$dest_pkg_dir"
+  mkdir -p "$dest_pkg_dir"
+
+  # Copy all APKs (base.apk and any split_*.apk)
+  local copied_apks=0
+  for apk_file in "$src_dir"/*.apk; do
+    if [ -f "$apk_file" ]; then
+      cp -f "$apk_file" "$dest_pkg_dir/"
+      copied_apks=$((copied_apks + 1))
+    fi
+  done
+
+  if [ "$copied_apks" -eq 0 ]; then
+    echo -e "${RED}[!] Error: No APK files found in $src_dir.${NC}"
+    rm -rf "$dest_pkg_dir"
+    return 1
+  fi
+
+  # Copy native libraries if available (lib/)
+  if [ -d "$src_dir/lib" ]; then
+    echo -e "    Copying native library files (lib/)..."
+    cp -af "$src_dir/lib" "$dest_pkg_dir/"
+  fi
+
+  # Store metadata
+  echo "package=$pkg" > "$dest_pkg_dir/.systemized_meta"
+  echo "date=$(date '+%Y-%m-%d %H:%M:%S')" >> "$dest_pkg_dir/.systemized_meta"
+  echo "source=$src_dir" >> "$dest_pkg_dir/.systemized_meta"
+  echo "type=$target_type" >> "$dest_pkg_dir/.systemized_meta"
+
+  # Fix permissions & SELinux contexts
+  apply_permissions "$dest_pkg_dir"
+
+  echo -e "${GREEN}[+] Successfully systemized '$pkg' ($copied_apks APK(s) copied).${NC}"
+  echo -e "${CYAN}[i] Changes will take effect upon the next reboot.${NC}"
+  return 0
+}
+
+# Systemize a standalone APK
+systemize_apk_file() {
+  local apk_file="$1"
+  local target_type="${2:-priv-app}"
+
+  ensure_dirs
+
+  if [ ! -f "$apk_file" ]; then
+    echo -e "${RED}[!] Error: File '$apk_file' does not exist.${NC}"
+    return 1
+  fi
+
+  local filename
+  filename=$(basename "$apk_file")
+  local app_name="${filename%.apk}"
+
+  local dest_base
+  if [ "$target_type" = "app" ]; then
+    dest_base="$APP_DIR"
+  else
+    dest_base="$PRIV_APP_DIR"
+  fi
+
+  local dest_pkg_dir="$dest_base/$app_name"
+
+  echo -e "${YELLOW}[*] Systemizing standalone APK:${NC} $filename"
+  echo -e "    Target: /system/$target_type/$app_name"
+
+  rm -rf "$dest_pkg_dir"
+  mkdir -p "$dest_pkg_dir"
+
+  cp -f "$apk_file" "$dest_pkg_dir/$app_name.apk"
+  apply_permissions "$dest_pkg_dir"
+
+  echo -e "${GREEN}[+] Successfully installed '$filename' to /system/$target_type.${NC}"
+  echo -e "${CYAN}[i] Changes will take effect upon the next reboot.${NC}"
+  return 0
+}
+
+# List all systemized apps
+list_systemized() {
+  ensure_dirs
+  echo -e "${BOLD}Currently Systemized Applications:${NC}"
+  echo "----------------------------------------------------------"
+
+  local count=0
+
+  if [ -d "$PRIV_APP_DIR" ]; then
+    for d in "$PRIV_APP_DIR"/*; do
+      if [ -d "$d" ]; then
+        local app_name
+        app_name=$(basename "$d")
+        local apk_count
+        apk_count=$(ls -1 "$d"/*.apk 2>/dev/null | wc -l)
+        echo -e " ${GREEN}[priv-app]${NC} ${BOLD}$app_name${NC} ($apk_count APK file(s))"
+        count=$((count + 1))
+      fi
+    done
+  fi
+
+  if [ -d "$APP_DIR" ]; then
+    for d in "$APP_DIR"/*; do
+      if [ -d "$d" ]; then
+        local app_name
+        app_name=$(basename "$d")
+        local apk_count
+        apk_count=$(ls -1 "$d"/*.apk 2>/dev/null | wc -l)
+        echo -e " ${BLUE}[app]     ${NC} ${BOLD}$app_name${NC} ($apk_count APK file(s))"
+        count=$((count + 1))
+      fi
+    done
+  fi
+
+  if [ "$count" -eq 0 ]; then
+    echo -e " ${YELLOW}(No systemized apps found)${NC}"
+  fi
+  echo "----------------------------------------------------------"
+}
+
+# Remove / Revert a systemized app
+remove_systemized() {
+  local target="$1"
+  local removed=0
+
+  if [ -z "$target" ]; then
+    echo -e "${RED}[!] Error: Please specify the app/package name to remove.${NC}"
+    return 1
+  fi
+
+  if [ -d "$PRIV_APP_DIR/$target" ]; then
+    rm -rf "$PRIV_APP_DIR/$target"
+    echo -e "${GREEN}[+] Removed '$target' from priv-app.${NC}"
+    removed=1
+  fi
+
+  if [ -d "$APP_DIR/$target" ]; then
+    rm -rf "$APP_DIR/$target"
+    echo -e "${GREEN}[+] Removed '$target' from app.${NC}"
+    removed=1
+  fi
+
+  if [ "$removed" -eq 1 ]; then
+    echo -e "${CYAN}[i] App will be restored to normal user app on next reboot.${NC}"
+  else
+    echo -e "${RED}[!] App '$target' was not found in systemized modules.${NC}"
+  fi
+}
+
+# Interactive package selector
+interactive_select_app() {
+  echo -e "${YELLOW}[*] Scanning installed 3rd-party applications...${NC}"
+
+  local tmp_list="/data/local/tmp/privapp_apps.txt"
+  pm list packages -3 | sed 's/^package://' | sort > "$tmp_list"
+
+  local total
+  total=$(wc -l < "$tmp_list")
+
+  if [ "$total" -eq 0 ]; then
+    echo -e "${RED}[!] No 3rd-party user applications detected.${NC}"
+    rm -f "$tmp_list"
+    return 1
+  fi
+
+  echo ""
+  echo -e "Found ${BOLD}$total${NC} installed user applications."
+  echo -n "Type search filter (or press Enter to list all): "
+  read -r filter
+
+  local filtered_list="/data/local/tmp/privapp_filtered.txt"
+  if [ -n "$filter" ]; then
+    grep -i "$filter" "$tmp_list" > "$filtered_list"
+  else
+    cp "$tmp_list" "$filtered_list"
+  fi
+
+  local count
+  count=$(wc -l < "$filtered_list")
+
+  if [ "$count" -eq 0 ]; then
+    echo -e "${RED}[!] No applications match filter '$filter'.${NC}"
+    rm -f "$tmp_list" "$filtered_list"
+    return 1
+  fi
+
+  echo ""
+  echo "=========================================================="
+  local i=1
+  while IFS= read -r pkg; do
+    printf " [%2d] %s\n" "$i" "$pkg"
+    i=$((i + 1))
+  done < "$filtered_list"
+  echo "=========================================================="
+  echo ""
+
+  echo -n "Select app number (1-$count) or '0' to cancel: "
+  read -r choice
+
+  if [ "$choice" = "0" ] || [ -z "$choice" ]; then
+    echo "Cancelled."
+    rm -f "$tmp_list" "$filtered_list"
+    return 0
+  fi
+
+  local selected_pkg
+  selected_pkg=$(sed -n "${choice}p" "$filtered_list")
+
+  rm -f "$tmp_list" "$filtered_list"
+
+  if [ -z "$selected_pkg" ]; then
+    echo -e "${RED}[!] Invalid selection.${NC}"
+    return 1
+  fi
+
+  echo ""
+  echo -e "Selected: ${BOLD}$selected_pkg${NC}"
+  echo "Where would you like to install it?"
+  echo "  [1] /system/priv-app (Recommended: full privileged system app)"
+  echo "  [2] /system/app      (Standard system app)"
+  echo -n "Choice [1/2] (default: 1): "
+  read -r type_choice
+
+  local target_type="priv-app"
+  if [ "$type_choice" = "2" ]; then
+    target_type="app"
+  fi
+
+  systemize_package "$selected_pkg" "$target_type"
+}
+
+interactive_remove() {
+  list_systemized
+
+  echo -n "Enter package/folder name to remove (or '0' to cancel): "
+  read -r target
+
+  if [ "$target" = "0" ] || [ -z "$target" ]; then
+    echo "Cancelled."
+    return 0
+  fi
+
+  remove_systemized "$target"
+}
+
+prompt_reboot() {
+  echo ""
+  echo -n "Would you like to reboot the device now? [y/N]: "
+  read -r ans
+  case "$ans" in
+    [yY][eE][sS]|[yY])
+      echo "Rebooting..."
+      svc power reboot || reboot
+      ;;
+    *)
+      echo "Remember to reboot later for changes to take effect."
+      ;;
+  esac
+}
+
+show_help() {
+  print_header
+  echo "Usage: privappctl [options]"
+  echo "       systemize [options]"
+  echo ""
+  echo "Options:"
+  echo "  (no arguments)              Open interactive menu"
+  echo "  -l, --list                  List currently systemized applications"
+  echo "  -s <package> [-p | -a]      Systemize installed package"
+  echo "                                -p: /system/priv-app (default)"
+  echo "                                -a: /system/app"
+  echo "  -f <apk_path> [-p | -a]     Systemize standalone APK file"
+  echo "  -r <package>                Remove/revert a systemized application"
+  echo "  -h, --help                  Show this help screen"
+  echo ""
+  echo "Examples:"
+  echo "  privappctl                  # Launches interactive TUI"
+  echo "  privappctl -s bin.mt.plus   # Moves MT Manager to priv-app"
+  echo "  privappctl -l               # Lists all systemized apps"
+  echo "  privappctl -r bin.mt.plus   # Reverts MT Manager to normal app"
+}
+
+# ------------------------------------------------------------------------------
+# Entry Point
+# ------------------------------------------------------------------------------
+check_root
+
+case "$1" in
+  -h|--help)
+    show_help
+    exit 0
+    ;;
+  -l|--list)
+    list_systemized
+    exit 0
+    ;;
+  -s)
+    shift
+    PKG="$1"
+    TARGET="priv-app"
+    if [ "$2" = "-a" ]; then
+      TARGET="app"
+    fi
+    systemize_package "$PKG" "$TARGET"
+    exit $?
+    ;;
+  -f)
+    shift
+    FILE="$1"
+    TARGET="priv-app"
+    if [ "$2" = "-a" ]; then
+      TARGET="app"
+    fi
+    systemize_apk_file "$FILE" "$TARGET"
+    exit $?
+    ;;
+  -r|--remove)
+    shift
+    remove_systemized "$1"
+    exit $?
+    ;;
+  "")
+    # Interactive TUI mode
+    while true; do
+      print_header
+      echo "Please choose an action:"
+      echo "  [1] Systemize an installed user app (Search & Pick)"
+      echo "  [2] Systemize a standalone APK file (/sdcard/...)"
+      echo "  [3] List currently systemized apps"
+      echo "  [4] Remove / Revert a systemized app"
+      echo "  [5] Reboot device"
+      echo "  [0] Exit"
+      echo ""
+      echo -n "Enter choice [0-5]: "
+      read -r opt
+      echo ""
+
+      case "$opt" in
+        1)
+          interactive_select_app
+          prompt_reboot
+          ;;
+        2)
+          echo -n "Enter full path to APK file (e.g. /sdcard/Download/app.apk): "
+          read -r apk_path
+          if [ -n "$apk_path" ]; then
+            echo -n "Install to [1] priv-app (default) or [2] app: "
+            read -r t_opt
+            t_dest="priv-app"
+            [ "$t_opt" = "2" ] && t_dest="app"
+            systemize_apk_file "$apk_path" "$t_dest"
+            prompt_reboot
+          fi
+          ;;
+        3)
+          list_systemized
+          echo -n "Press Enter to return to menu..."
+          read -r _
+          ;;
+        4)
+          interactive_remove
+          prompt_reboot
+          ;;
+        5)
+          echo "Rebooting..."
+          svc power reboot || reboot
+          ;;
+        0|q|Q)
+          echo "Goodbye!"
+          exit 0
+          ;;
+        *)
+          echo -e "${RED}Invalid option.${NC}"
+          ;;
+      esac
+      echo ""
+    done
+    ;;
+  *)
+    echo -e "${RED}[!] Unknown option: $1${NC}"
+    echo "Run 'privappctl --help' for usage."
+    exit 1
+    ;;
+esac

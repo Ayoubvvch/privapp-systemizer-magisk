@@ -1,0 +1,7 @@
+id=privapp_systemizer
+name=PrivApp Systemizer (Modern)
+version=v1.0.0
+versionCode=10000
+author=Ayoubvvch
+description=Modern systemless app systemizer for Android 10-15+. Converts user apps, split APKs, and standalone APKs into system priv-app or app via an interactive CLI.
+updateJson=https://raw.githubusercontent.com/Ayoubvvch/privapp-systemizer-magisk/main/update.json

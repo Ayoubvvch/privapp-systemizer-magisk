@@ -1,0 +1,3 @@
+# Modern PrivApp Systemizer
+# Avoid bootloops caused by missing privapp-permissions whitelist on modern Android
+ro.control_privapp_permissions=log
