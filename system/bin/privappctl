@@ -6,7 +6,7 @@
 # ==============================================================================
 
 MODID="privapp_systemizer"
-VERSION="v1.0.0"
+VERSION="v1.1.0"
 
 # Color constants
 RED='\033[0;31m'
@@ -244,6 +244,64 @@ remove_systemized() {
   fi
 }
 
+# Output JSON of user apps (for WebUI)
+json_user_apps() {
+  echo "["
+  local first=1
+  for pkg in $(pm list packages -3 2>/dev/null | sed 's/^package://' | sort); do
+    [ -z "$pkg" ] && continue
+    if [ "$first" -eq 1 ]; then
+      printf '  {"pkg":"%s"}' "$pkg"
+      first=0
+    else
+      printf ',\n  {"pkg":"%s"}' "$pkg"
+    fi
+  done
+  echo ""
+  echo "]"
+}
+
+# Output JSON of systemized apps (for WebUI)
+json_systemized() {
+  ensure_dirs
+  echo "["
+  local first=1
+  if [ -d "$PRIV_APP_DIR" ]; then
+    for d in "$PRIV_APP_DIR"/*; do
+      if [ -d "$d" ]; then
+        local name
+        name=$(basename "$d")
+        local apks
+        apks=$(ls -1 "$d"/*.apk 2>/dev/null | wc -l)
+        if [ "$first" -eq 1 ]; then
+          first=0
+        else
+          printf ',\n'
+        fi
+        printf '  {"pkg":"%s","type":"priv-app","apks":%d}' "$name" "$apks"
+      fi
+    done
+  fi
+  if [ -d "$APP_DIR" ]; then
+    for d in "$APP_DIR"/*; do
+      if [ -d "$d" ]; then
+        local name
+        name=$(basename "$d")
+        local apks
+        apks=$(ls -1 "$d"/*.apk 2>/dev/null | wc -l)
+        if [ "$first" -eq 1 ]; then
+          first=0
+        else
+          printf ',\n'
+        fi
+        printf '  {"pkg":"%s","type":"app","apks":%d}' "$name" "$apks"
+      fi
+    done
+  fi
+  echo ""
+  echo "]"
+}
+
 # Interactive package selector
 interactive_select_app() {
   echo -e "${YELLOW}[*] Scanning installed 3rd-party applications...${NC}"
@@ -368,6 +426,8 @@ show_help() {
   echo "                                -a: /system/app"
   echo "  -f <apk_path> [-p | -a]     Systemize standalone APK file"
   echo "  -r <package>                Remove/revert a systemized application"
+  echo "  --json-user-apps            Output installed 3rd-party apps in JSON"
+  echo "  --json-systemized           Output currently systemized apps in JSON"
   echo "  -h, --help                  Show this help screen"
   echo ""
   echo "Examples:"
@@ -389,6 +449,14 @@ case "$1" in
     ;;
   -l|--list)
     list_systemized
+    exit 0
+    ;;
+  --json-user-apps)
+    json_user_apps
+    exit 0
+    ;;
+  --json-systemized)
+    json_systemized
     exit 0
     ;;
   -s)

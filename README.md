@@ -5,18 +5,19 @@
 [![Platform](https://img.shields.io/badge/Platform-Android%2010--15%2B-green.svg?style=flat-square)](https://github.com/Ayoubvvch/privapp-systemizer-magisk)
 [![Architecture](https://img.shields.io/badge/Architecture-Universal%20%2F%20arm64-red.svg?style=flat-square)](https://github.com/Ayoubvvch/privapp-systemizer-magisk)
 
-A modern, systemless application systemizer module for Android 10, 11, 12, 13, 14, and Android 15+. Easily move installed user applications, multi-split APK bundles, or standalone APKs into `/system/priv-app` or `/system/app` without modifying the physical system partition.
+A modern, systemless application systemizer module for Android 10, 11, 12, 13, 14, and Android 15+. Features a sleek **KsuWebUI interactive graphical interface** as well as a powerful command-line utility. Easily move installed user applications, multi-split APK bundles, or standalone APKs into `/system/priv-app` or `/system/app` without modifying the physical system partition.
 
 ---
 
 ## ✨ Features
 
+- **🎨 Modern WebUI (KsuWebUI / KernelSU / APatch)**: Built-in `webroot` interface featuring dark glassmorphism, instant app search, one-tap systemization, and visual management.
 - **🧩 Split APKs & App Bundles**: Seamlessly copies and configures modern Android App Bundles (`base.apk` + all `split_*.apk`), preventing the crashes common with legacy systemizers.
 - **🛡️ Anti-Bootloop Protection**: Enforces `ro.control_privapp_permissions=log` via `system.prop` to prevent device bootloops caused by missing privileged permission whitelists.
 - **📚 Native Library Handling**: Detects and preserves native `.so` libraries (`lib/arm64`, `lib/arm`, etc.) for complete app functionality.
 - **💻 Interactive & Scriptable CLI**:
-  - Run `privappctl` or `systemize` in an interactive TUI to search and pick apps easily.
-  - Full CLI flag support (`-s`, `-f`, `-l`, `-r`) for quick terminal commands or automated scripts.
+  - Run `privappctl` or `systemize` in an interactive terminal menu.
+  - Full CLI flag support (`-s`, `-f`, `-l`, `-r`, `--json-user-apps`, `--json-systemized`) for quick terminal commands or automated scripts.
 - **🔄 Clean Revert & Removal**: Easily un-systemize any application and restore it to a normal user app without reinstalling or wiping the module.
 - **🪄 100% Systemless**: Works seamlessly with **Magisk**, **KernelSU**, and **APatch** via magic mount / overlayfs.
 - **⚡ In-App Updates**: Built-in `updateJson` manifest support for one-click updates directly inside the Magisk / KernelSU app.
@@ -28,64 +29,31 @@ A modern, systemless application systemizer module for Android 10, 11, 12, 13, 1
 1. Download the latest **`privapp-systemizer-magisk.zip`** from [GitHub Releases](https://github.com/Ayoubvvch/privapp-systemizer-magisk/releases).
 2. Open **Magisk**, **KernelSU**, or **APatch** on your phone.
 3. Navigate to **Modules** ➔ **Install from storage** ➔ Select the downloaded zip.
-4. Reboot your device to activate the `privappctl` command.
+4. Reboot your device.
 
 ---
 
-## 🚀 Usage
+## 🚀 How to Use
 
-Open any root terminal (Termux, MT Manager terminal, or remote **SSH** session) and run `su`.
+### 1. Interactive Graphical WebUI (Recommended)
+If you have **KsuWebUI** (or KernelSU / APatch) installed:
+1. Open the **KsuWebUI** app on your phone.
+2. Select **PrivApp Systemizer**.
+3. Browse and search your installed user apps, select target (`priv-app` or `app`), and click **Systemize**!
+4. You can also view systemized apps and revert them with one tap from the **Systemized** tab.
 
-### 1. Interactive Menu (Recommended)
-Simply type:
-```bash
-privappctl
-# or
-systemize
-```
-
-You will be presented with a menu:
-```text
-==========================================================
-        PrivApp Systemizer (Modern) - v1.0.0
-        Systemless App Systemizer for Android 10-15+
-==========================================================
-
-Please choose an action:
-  [1] Systemize an installed user app (Search & Pick)
-  [2] Systemize a standalone APK file (/sdcard/...)
-  [3] List currently systemized apps
-  [4] Remove / Revert a systemized app
-  [5] Reboot device
-  [0] Exit
-```
-
-### 2. Command-Line Options (One-liners)
+### 2. Command-Line Interface (`privappctl` / `systemize`)
+Open any root terminal (Termux, MT Manager, or remote **SSH** session) and run `su`.
 
 | Command | Action |
 | :--- | :--- |
-| `privappctl` | Open interactive TUI menu |
+| `privappctl` | Open interactive TUI terminal menu |
 | `privappctl -l` | List all currently systemized applications |
 | `privappctl -s <package_name>` | Systemize installed package to `/system/priv-app` (default) |
 | `privappctl -s <package_name> -a` | Systemize installed package to `/system/app` (standard) |
 | `privappctl -f /path/to/app.apk` | Systemize a standalone APK file from storage |
 | `privappctl -r <package_name>` | Remove a systemized app and revert upon reboot |
 | `privappctl -h` | Display help and options |
-
-#### Examples:
-```bash
-# Systemize MT Manager into /system/priv-app
-privappctl -s bin.mt.plus
-
-# Systemize a standalone APK downloaded to your phone
-privappctl -f /sdcard/Download/MyTool.apk
-
-# List all systemized apps
-privappctl -l
-
-# Revert an app
-privappctl -r bin.mt.plus
-```
 
 ---
 

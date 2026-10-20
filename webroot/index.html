@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <title>PrivApp Systemizer</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface-hover: #1f242c;
+      --card-bg: rgba(22, 27, 34, 0.75);
+      --border: rgba(240, 246, 252, 0.1);
+      --accent: #58a6ff;
+      --accent-gradient: linear-gradient(135deg, #388bfd 0%, #1f6feb 100%);
+      --accent-glow: rgba(56, 139, 253, 0.25);
+      --success: #3fb950;
+      --success-glow: rgba(63, 185, 80, 0.2);
+      --warning: #d29922;
+      --danger: #f85149;
+      --danger-glow: rgba(248, 81, 73, 0.2);
+      --text: #f0f6fc;
+      --text-secondary: #8b949e;
+      --text-dim: #6e7681;
+      --radius: 14px;
+      --radius-sm: 8px;
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: calc(75px + env(safe-area-inset-bottom));
+    }
+
+    /* Top App Bar */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(13, 17, 23, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: var(--accent-gradient);
+      box-shadow: 0 4px 12px var(--accent-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-badge svg {
+      width: 22px;
+      height: 22px;
+      fill: #fff;
+    }
+
+    .brand-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .icon-btn:active {
+      transform: scale(0.92);
+      background: var(--surface-hover);
+    }
+
+    .icon-btn.danger {
+      color: var(--danger);
+      border-color: rgba(248, 81, 73, 0.3);
+    }
+
+    .icon-btn.danger:active {
+      background: var(--danger-glow);
+    }
+
+    .icon-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    .spin {
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Container */
+    main {
+      padding: 16px;
+      flex: 1;
+      max-width: 680px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Bottom Navigation */
+    nav.bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      background: rgba(22, 27, 34, 0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 4px calc(8px + env(safe-area-inset-bottom)) 4px;
+    }
+
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-secondary);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px 0;
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+      font-size: 0.72rem;
+      font-weight: 500;
+      position: relative;
+    }
+
+    .nav-item svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+      transition: var(--transition);
+    }
+
+    .nav-item.active {
+      color: var(--accent);
+    }
+
+    .nav-item.active svg {
+      transform: translateY(-1px);
+    }
+
+    .nav-badge {
+      position: absolute;
+      top: 2px;
+      right: calc(50% - 18px);
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 999px;
+      min-width: 16px;
+    }
+
+    /* Search Bar */
+    .search-wrapper {
+      position: relative;
+      margin-bottom: 14px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      fill: var(--text-dim);
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 12px 14px 12px 42px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+      transition: var(--transition);
+      user-select: text;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    /* Tab Panels */
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* App Card List */
+    .section-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .app-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: var(--transition);
+    }
+
+    .app-card:hover {
+      background: var(--surface-hover);
+      border-color: rgba(240, 246, 252, 0.15);
+    }
+
+    .app-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .app-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(88, 166, 255, 0.2) 0%, rgba(31, 111, 235, 0.1) 100%);
+      border: 1px solid rgba(88, 166, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .app-details {
+      min-width: 0;
+    }
+
+    .app-pkg {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: text;
+    }
+
+    .app-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .badge-priv {
+      background: var(--success-glow);
+      color: var(--success);
+      border: 1px solid rgba(63, 185, 80, 0.3);
+    }
+
+    .badge-app {
+      background: var(--accent-glow);
+      color: var(--accent);
+      border: 1px solid rgba(88, 166, 255, 0.3);
+    }
+
+    .btn-action {
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .btn-primary {
+      background: var(--accent-gradient);
+      color: #fff;
+      box-shadow: 0 2px 8px var(--accent-glow);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.96);
+    }
+
+    .btn-danger {
+      background: rgba(248, 81, 73, 0.15);
+      color: var(--danger);
+      border-color: rgba(248, 81, 73, 0.3);
+    }
+
+    .btn-danger:active {
+      background: rgba(248, 81, 73, 0.25);
+      transform: scale(0.96);
+    }
+
+    .empty-card {
+      text-align: center;
+      padding: 48px 24px;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      color: var(--text-secondary);
+    }
+
+    .empty-card svg {
+      width: 48px;
+      height: 48px;
+      fill: var(--text-dim);
+      margin-bottom: 12px;
+    }
+
+    /* Modal Sheet */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .modal-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      width: 100%;
+      max-width: 520px;
+      padding: 24px 20px calc(24px + env(safe-area-inset-bottom)) 20px;
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
+      animation: slideUp 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .modal-desc {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      margin-bottom: 18px;
+      word-break: break-all;
+    }
+
+    .option-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg);
+      transition: var(--transition);
+    }
+
+    .option-card:hover, .option-card.selected {
+      border-color: var(--accent);
+      background: rgba(88, 166, 255, 0.08);
+    }
+
+    .option-card input[type="radio"] {
+      accent-color: var(--accent);
+      width: 18px;
+      height: 18px;
+    }
+
+    .option-text h4 {
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+
+    .option-text p {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .modal-btn.cancel {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+
+    .modal-btn.confirm {
+      background: var(--accent-gradient);
+      color: #fff;
+    }
+
+    .modal-btn.confirm-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* Toast */
+    .toast-box {
+      position: fixed;
+      top: calc(16px + env(safe-area-inset-top));
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      z-index: 200;
+      background: rgba(22, 27, 34, 0.95);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      color: var(--text);
+      padding: 12px 20px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      transition: all 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      pointer-events: none;
+    }
+
+    .toast-box.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Custom APK Card Form */
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.88rem;
+      outline: none;
+      transition: var(--transition);
+      user-select: text;
+    }
+
+    .form-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    /* Info Table */
+    .info-list {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .info-item {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+    }
+
+    .info-item:last-child {
+      border-bottom: none;
+    }
+
+    .info-key {
+      color: var(--text-secondary);
+    }
+
+    .info-val {
+      font-weight: 600;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top App Bar -->
+  <header>
+    <div class="brand">
+      <div class="logo-badge">
+        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.93V17a1 1 0 0 1-2 0v-.07A7 7 0 0 1 5.07 11H5a1 1 0 0 1 0-2h.07A7 7 0 0 1 11 5.07V5a1 1 0 0 1 2 0v.07A7 7 0 0 1 18.93 11H19a1 1 0 0 1 0 2h-.07A7 7 0 0 1 13 16.93zM12 7a5 5 0 1 0 5 5 5 5 0 0 0-5-5z"/></svg>
+      </div>
+      <div>
+        <div class="brand-title">PrivApp Systemizer</div>
+        <div class="brand-subtitle">Modern Systemless Systemizer</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" id="btn-refresh" title="Refresh">
+        <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      </button>
+      <button class="icon-btn danger" id="btn-reboot" title="Reboot">
+        <svg viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42A6.92 6.92 0 0 1 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.38 1.19-4.47 3-5.74L6.58 4.84A8.936 8.936 0 0 0 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main>
+    <!-- Tab 1: User Apps -->
+    <section class="tab-panel active" id="tab-user-apps">
+      <div class="search-wrapper">
+        <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <input type="text" class="search-input" id="search-input" placeholder="Search installed user apps..." autocomplete="off">
+      </div>
+      <div class="section-meta">
+        <span id="user-apps-count">Loading apps...</span>
+      </div>
+      <div id="user-apps-list">
+        <div class="empty-card">
+          <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0 0 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 0 0 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+          <p>Scanning 3rd-party user applications...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 2: Systemized Apps -->
+    <section class="tab-panel" id="tab-systemized">
+      <div class="section-meta">
+        <span id="systemized-count">Systemized Applications</span>
+      </div>
+      <div id="systemized-list">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- Tab 3: Custom APK -->
+    <section class="tab-panel" id="tab-custom-apk">
+      <div class="form-card">
+        <div class="form-group">
+          <label class="form-label">Full Path to APK File</label>
+          <input type="text" class="form-input" id="custom-apk-path" placeholder="/sdcard/Download/MyApplication.apk">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Installation Destination</label>
+          <div class="option-card selected" id="custom-target-priv" onclick="selectCustomTarget('priv-app')">
+            <input type="radio" name="custom-target" value="priv-app" checked>
+            <div class="option-text">
+              <h4>/system/priv-app (Privileged)</h4>
+              <p>Full privileged system application (Recommended)</p>
+            </div>
+          </div>
+          <div class="option-card" id="custom-target-app" onclick="selectCustomTarget('app')">
+            <input type="radio" name="custom-target" value="app">
+            <div class="option-text">
+              <h4>/system/app (Standard)</h4>
+              <p>Standard non-privileged system application</p>
+            </div>
+          </div>
+        </div>
+        <button class="btn-action btn-primary" id="btn-install-custom" style="width: 100%; justify-content: center; padding: 12px;">
+          Install APK as System App
+        </button>
+      </div>
+    </section>
+
+    <!-- Tab 4: Info -->
+    <section class="tab-panel" id="tab-info">
+      <div class="info-list">
+        <div class="info-item">
+          <span class="info-key">Module Version</span>
+          <span class="info-val">v1.1.0 (10100)</span>
+        </div>
+        <div class="info-item">
+          <span class="info-key">Device Model</span>
+          <span class="info-val" id="info-device">Detecting...</span>
+        </div>
+        <div class="info-item">
+          <span class="info-key">Android Version</span>
+          <span class="info-val" id="info-android">Detecting...</span>
+        </div>
+        <div class="info-item">
+          <span class="info-key">Anti-Bootloop Whitelist Override</span>
+          <span class="info-val" id="info-bootloop"><span class="badge badge-priv">Active (log)</span></span>
+        </div>
+        <div class="info-item">
+          <span class="info-key">Module Repository</span>
+          <span class="info-val"><a href="https://github.com/Ayoubvvch/privapp-systemizer-magisk" target="_blank" style="color: var(--accent); text-decoration: none;">Ayoubvvch/privapp-systemizer-magisk</a></span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('user-apps')">
+      <svg viewBox="0 0 24 24"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>
+      <span>User Apps</span>
+      <span class="nav-badge" id="badge-user-apps" style="display:none;">0</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('systemized')">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      <span>Systemized</span>
+      <span class="nav-badge" id="badge-systemized" style="display:none;">0</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('custom-apk')">
+      <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+      <span>Install APK</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('info')">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+      <span>Info</span>
+    </button>
+  </nav>
+
+  <!-- Systemize Selection Modal Sheet -->
+  <div class="modal-overlay" id="systemize-modal">
+    <div class="modal-card">
+      <div class="modal-title">Systemize Application</div>
+      <div class="modal-desc" id="modal-app-pkg">package.name</div>
+
+      <div class="option-card selected" id="opt-priv" onclick="selectModalTarget('priv-app')">
+        <input type="radio" name="modal-target" value="priv-app" checked>
+        <div class="option-text">
+          <h4>/system/priv-app (Recommended)</h4>
+          <p>Full privileged system permissions (Key APIs & Services)</p>
+        </div>
+      </div>
+
+      <div class="option-card" id="opt-app" onclick="selectModalTarget('app')">
+        <input type="radio" name="modal-target" value="app">
+        <div class="option-text">
+          <h4>/system/app (Standard)</h4>
+          <p>Standard non-privileged system app</p>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="modal-btn cancel" onclick="closeModal('systemize-modal')">Cancel</button>
+        <button class="modal-btn confirm" id="btn-confirm-systemize">Confirm & Systemize</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Revert Confirmation Modal Sheet -->
+  <div class="modal-overlay" id="revert-modal">
+    <div class="modal-card">
+      <div class="modal-title">Revert Application</div>
+      <div class="modal-desc" id="revert-app-pkg">package.name</div>
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+        This app will be removed from system mount and restored to a normal user app upon device reboot.
+      </p>
+      <div class="modal-actions">
+        <button class="modal-btn cancel" onclick="closeModal('revert-modal')">Cancel</button>
+        <button class="modal-btn confirm-danger" id="btn-confirm-revert">Revert App</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reboot Confirmation Modal -->
+  <div class="modal-overlay" id="reboot-modal">
+    <div class="modal-card">
+      <div class="modal-title">Reboot Device</div>
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">
+        Are you sure you want to reboot the device now to apply system changes?
+      </p>
+      <div class="modal-actions">
+        <button class="modal-btn cancel" onclick="closeModal('reboot-modal')">Cancel</button>
+        <button class="modal-btn confirm-danger" id="btn-confirm-reboot">Reboot Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Toast -->
+  <div class="toast-box" id="toast-box">
+    <span id="toast-text">Success</span>
+  </div>
+
+  <script>
+    // Global State
+    let userApps = [];
+    let systemizedApps = [];
+    let selectedPackage = null;
+    let selectedTargetType = "priv-app";
+    let customTargetType = "priv-app";
+
+    // Shell Execution Wrapper for KernelSU / Magisk WebUI
+    async function execShell(cmd) {
+      const api = (window.ksu || window.kernelsu);
+      if (!api || typeof api.exec !== "function") {
+        throw new Error("KernelSU/WebUI API not detected");
+      }
+
+      return new Promise((resolve, reject) => {
+        const callbackName = "__ps_cb_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+        let completed = false;
+
+        const finish = (ok, value) => {
+          if (completed) return;
+          completed = true;
+          try { delete window[callbackName]; } catch(e){}
+          ok ? resolve(String(value ?? "").trim()) : reject(new Error(String(value || "Command failed")));
+        };
+
+        window[callbackName] = (code, stdout, stderr) => {
+          const exitCode = typeof code === "number" ? code : Number(code || 0);
+          finish(exitCode === 0, exitCode === 0 ? stdout : (stderr || stdout || "Command exited with error"));
+        };
+
+        try {
+          const res = api.exec(cmd, "{}", callbackName);
+          if (res && typeof res.then === "function") {
+            res.then(val => finish(true, val?.stdout ?? val ?? ""), err => finish(false, err));
+          }
+        } catch(e) {
+          finish(false, e);
+        }
+
+        setTimeout(() => { if (!completed) finish(false, "Command timeout"); }, 25000);
+      });
+    }
+
+    function showToast(msg) {
+      if (window.ksu?.toast) { window.ksu.toast(msg); return; }
+      if (window.kernelsu?.toast) { window.kernelsu.toast(msg); return; }
+
+      const toast = document.getElementById("toast-box");
+      document.getElementById("toast-text").innerText = msg;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2800);
+    }
+
+    // Switch Tabs
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+
+      const target = document.getElementById("tab-" + tabId);
+      if (target) target.classList.add("active");
+
+      const idx = ["user-apps", "systemized", "custom-apk", "info"].indexOf(tabId);
+      if (idx !== -1) {
+        document.querySelectorAll(".nav-item")[idx].classList.add("active");
+      }
+    }
+
+    // Modal Helpers
+    function openModal(id) {
+      document.getElementById(id).classList.add("open");
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove("open");
+    }
+
+    function selectModalTarget(type) {
+      selectedTargetType = type;
+      document.getElementById("opt-priv").classList.toggle("selected", type === "priv-app");
+      document.getElementById("opt-app").classList.toggle("selected", type === "app");
+      document.querySelector(`input[name="modal-target"][value="${type}"]`).checked = true;
+    }
+
+    function selectCustomTarget(type) {
+      customTargetType = type;
+      document.getElementById("custom-target-priv").classList.toggle("selected", type === "priv-app");
+      document.getElementById("custom-target-app").classList.toggle("selected", type === "app");
+      document.querySelector(`input[name="custom-target"][value="${type}"]`).checked = true;
+    }
+
+    // Data Loaders
+    async function loadData() {
+      const refreshBtn = document.getElementById("btn-refresh");
+      refreshBtn.querySelector("svg").classList.add("spin");
+
+      try {
+        await Promise.all([loadSystemized(), loadUserApps(), loadDeviceInfo()]);
+      } catch (err) {
+        console.error("Load failed:", err);
+      } finally {
+        refreshBtn.querySelector("svg").classList.remove("spin");
+      }
+    }
+
+    async function loadDeviceInfo() {
+      try {
+        const model = await execShell("getprop ro.product.model || echo 'Android Device'");
+        const release = await execShell("getprop ro.build.version.release || echo '15'");
+        document.getElementById("info-device").innerText = model;
+        document.getElementById("info-android").innerText = "Android " + release;
+      } catch(e) {
+        document.getElementById("info-device").innerText = "Android Device";
+        document.getElementById("info-android").innerText = "Android 10-15+";
+      }
+    }
+
+    async function loadSystemized() {
+      try {
+        const raw = await execShell("privappctl --json-systemized 2>/dev/null || echo '[]'");
+        systemizedApps = JSON.parse(raw || "[]");
+      } catch(e) {
+        systemizedApps = [];
+      }
+
+      renderSystemized();
+    }
+
+    function renderSystemized() {
+      const container = document.getElementById("systemized-list");
+      const badge = document.getElementById("badge-systemized");
+      const countLabel = document.getElementById("systemized-count");
+
+      if (systemizedApps.length > 0) {
+        badge.innerText = systemizedApps.length;
+        badge.style.display = "inline-block";
+        countLabel.innerText = `Currently Systemized (${systemizedApps.length})`;
+      } else {
+        badge.style.display = "none";
+        countLabel.innerText = "Systemized Applications (0)";
+      }
+
+      if (systemizedApps.length === 0) {
+        container.innerHTML = `
+          <div class="empty-card">
+            <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            <p>No systemized applications yet.<br>Go to 'User Apps' to convert apps.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = systemizedApps.map(app => {
+        const isPriv = app.type === "priv-app";
+        const badgeClass = isPriv ? "badge-priv" : "badge-app";
+        const typeLabel = isPriv ? "priv-app" : "app";
+        const apkText = app.apks > 1 ? `${app.apks} APKs (Splits)` : `${app.apks} APK`;
+
+        return `
+          <div class="app-card">
+            <div class="app-left">
+              <div class="app-avatar" style="${isPriv ? 'color: var(--success); border-color: rgba(63, 185, 80, 0.4); background: rgba(63, 185, 80, 0.1);' : ''}">
+                ${(app.pkg || "A").charAt(0).toUpperCase()}
+              </div>
+              <div class="app-details">
+                <div class="app-pkg">${app.pkg}</div>
+                <div class="app-status">
+                  <span class="badge ${badgeClass}">${typeLabel}</span>
+                  <span style="font-size: 0.72rem; color: var(--text-dim);">${apkText}</span>
+                </div>
+              </div>
+            </div>
+            <button class="btn-action btn-danger" onclick="promptRevert('${app.pkg}')">
+              Revert
+            </button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function loadUserApps() {
+      try {
+        const raw = await execShell("privappctl --json-user-apps 2>/dev/null || echo '[]'");
+        userApps = JSON.parse(raw || "[]");
+      } catch(e) {
+        userApps = [];
+      }
+
+      document.getElementById("badge-user-apps").innerText = userApps.length;
+      document.getElementById("badge-user-apps").style.display = userApps.length > 0 ? "inline-block" : "none";
+
+      renderUserApps();
+    }
+
+    function renderUserApps() {
+      const container = document.getElementById("user-apps-list");
+      const filter = document.getElementById("search-input").value.trim().toLowerCase();
+
+      const filtered = userApps.filter(a => a.pkg.toLowerCase().includes(filter));
+      document.getElementById("user-apps-count").innerText = `Showing ${filtered.length} of ${userApps.length} user apps`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="empty-card">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <p>No user applications match your search.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const systemizedMap = new Map();
+      systemizedApps.forEach(s => systemizedMap.set(s.pkg, s.type));
+
+      container.innerHTML = filtered.map(item => {
+        const sysType = systemizedMap.get(item.pkg);
+        const isSys = !!sysType;
+        const initial = (item.pkg || "A").charAt(0).toUpperCase();
+
+        return `
+          <div class="app-card">
+            <div class="app-left">
+              <div class="app-avatar">${initial}</div>
+              <div class="app-details">
+                <div class="app-pkg">${item.pkg}</div>
+                <div class="app-status">
+                  ${isSys ? `<span class="badge ${sysType === 'priv-app' ? 'badge-priv' : 'badge-app'}">Already ${sysType}</span>` : `<span style="font-size: 0.72rem; color: var(--text-dim);">User App</span>`}
+                </div>
+              </div>
+            </div>
+            <button class="btn-action btn-primary" onclick="promptSystemize('${item.pkg}')">
+              ${isSys ? 'Change' : 'Systemize'}
+            </button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    // Modal Prompts & Actions
+    function promptSystemize(pkg) {
+      selectedPackage = pkg;
+      document.getElementById("modal-app-pkg").innerText = pkg;
+      selectModalTarget("priv-app");
+      openModal("systemize-modal");
+    }
+
+    document.getElementById("btn-confirm-systemize").onclick = async function() {
+      if (!selectedPackage) return;
+      const pkg = selectedPackage;
+      const target = selectedTargetType;
+      closeModal("systemize-modal");
+
+      showToast(`Systemizing ${pkg} to ${target}...`);
+
+      try {
+        const flag = target === "app" ? "-a" : "-p";
+        await execShell(`privappctl -s "${pkg}" ${flag}`);
+        showToast(`Successfully systemized ${pkg}!`);
+        await loadData();
+      } catch (err) {
+        showToast("Error: " + err.message);
+      }
+    };
+
+    function promptRevert(pkg) {
+      selectedPackage = pkg;
+      document.getElementById("revert-app-pkg").innerText = pkg;
+      openModal("revert-modal");
+    }
+
+    document.getElementById("btn-confirm-revert").onclick = async function() {
+      if (!selectedPackage) return;
+      const pkg = selectedPackage;
+      closeModal("revert-modal");
+
+      showToast(`Reverting ${pkg}...`);
+
+      try {
+        await execShell(`privappctl -r "${pkg}"`);
+        showToast(`Reverted ${pkg}`);
+        await loadData();
+      } catch (err) {
+        showToast("Error: " + err.message);
+      }
+    };
+
+    // Custom APK install
+    document.getElementById("btn-install-custom").onclick = async function() {
+      const path = document.getElementById("custom-apk-path").value.trim();
+      if (!path) {
+        showToast("Please enter APK file path");
+        return;
+      }
+
+      showToast(`Installing ${path} as ${customTargetType}...`);
+
+      try {
+        const flag = customTargetType === "app" ? "-a" : "-p";
+        await execShell(`privappctl -f "${path}" ${flag}`);
+        showToast("Installed APK successfully!");
+        document.getElementById("custom-apk-path").value = "";
+        await loadData();
+        switchTab("systemized");
+      } catch (err) {
+        showToast("Error: " + err.message);
+      }
+    };
+
+    // Reboot handler
+    document.getElementById("btn-reboot").onclick = () => openModal("reboot-modal");
+    document.getElementById("btn-confirm-reboot").onclick = async () => {
+      closeModal("reboot-modal");
+      showToast("Rebooting device...");
+      try {
+        await execShell("svc power reboot || reboot");
+      } catch(e) {
+        showToast("Failed to reboot: " + e.message);
+      }
+    };
+
+    // Refresh handler
+    document.getElementById("btn-refresh").onclick = loadData;
+
+    // Search filter
+    document.getElementById("search-input").addEventListener("input", renderUserApps);
+
+    // Initial Load
+    window.addEventListener("DOMContentLoaded", () => {
+      loadData();
+    });
+  </script>
+</body>
+</html>
